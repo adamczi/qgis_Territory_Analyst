@@ -24,6 +24,7 @@ from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, QTi
 from PyQt4.QtGui import QAction, QIcon, QTableWidgetItem, QInputDialog, QHeaderView, QTableView, QStandardItem, QStandardItemModel, QComboBox, QCheckBox, QLabel, QToolBar
 from qgis.core import QgsMapLayerRegistry, QgsVectorLayer, QgsFeatureRequest, QgsExpression, QgsMapLayer
 from qgis.gui import QgsMessageBar
+from qgis.utils import reloadPlugin
 # Initialize Qt resources from file resources.py
 import resources
 # Import the code for the dialog
@@ -37,6 +38,7 @@ from decimal import Decimal
 from fractions import Fraction
 from plugin4customTable import QCustomTableWidgetItem
 import pyqtgraph
+import pyqtgraph.opengl as gl
 
 
 
@@ -80,12 +82,10 @@ class plugin4:
         ## Add to LI tooblar or create if doesn't exist
         toolbarName = 'Location Intelligence'
         self.toolbar = self.iface.mainWindow().findChild(QToolBar,toolbarName)
-        print self.toolbar
         if self.toolbar is None:
             self.toolbar = self.iface.addToolBar(toolbarName)
             self.toolbar.setObjectName(toolbarName)
 
-        
         ## Run functions connected to button clicks
 
         ## Get attributes of chosen file
@@ -196,7 +196,6 @@ class plugin4:
             callback=self.run,
             parent=self.iface.mainWindow())
 
-
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
         for action in self.actions:
@@ -206,7 +205,7 @@ class plugin4:
             self.iface.removeToolBarIcon(action)
         # remove the toolbar
         if len(self.toolbar.actions())==0:
-            del self.toolbar
+            del self.toolbar     
 
     def availableLayers(self):
         """ List layers available to select in the side panel """
@@ -246,8 +245,6 @@ class plugin4:
         self.dlg.tableWidget_2.setColumnWidth(0,25)
         self.dlg.tableWidget_2.verticalHeader().setVisible(False)
         self.dlg.tableWidget_2.horizontalHeader().setVisible(False)
-
-        
 
     def getAttributes(self):
         """ Get layer's headlines and fields information """
@@ -421,7 +418,7 @@ class plugin4:
 
         ## Select features using IDs of 'features'
         ids = [i.id() for i in features]
-        layerList[0].selectByIds(ids)
+        layerList[0].setSelectedFeatures(ids)
 
     def prepareGraph(self):
         """ Prepare data to use """
@@ -464,8 +461,6 @@ class plugin4:
 
     def buildGraph(self):
         """ Add data to the graph """
-        pyqtgraph.setConfigOption('background', (230,230,230))
-        pyqtgraph.setConfigOption('foreground', (100,100,100))
         dataColor = (102,178,255)
         dataBorderColor = (180,220,255)
         barGraph = self.graph.graphicsView
@@ -480,7 +475,6 @@ class plugin4:
     def showGraph(self):
         """ Just show the graph """
         self.graph.show()
-       
 
     def run(self):
         """ Functions that run every time the dialog shows up """
