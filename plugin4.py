@@ -38,8 +38,6 @@ from decimal import Decimal
 from fractions import Fraction
 from plugin4customTable import QCustomTableWidgetItem
 import pyqtgraph
-import pyqtgraph.opengl as gl
-
 
 
 class plugin4:
@@ -228,6 +226,8 @@ class plugin4:
         self.dlg.tableWidget_2.setColumnCount(3)
 
         ## Fill the table
+        if len(self.numFields) == 0:
+            self.dlg.tableWidget_2.setRowCount(0)        
         for i in range(len(self.numFields)):
             checkBoxItem = QCheckBox()
             checkBoxItem.setCheckState(Qt.Unchecked) 
@@ -251,21 +251,27 @@ class plugin4:
         ## Work on layer 'warstwa 1'
         layerList = QgsMapLayerRegistry.instance().mapLayersByName(self.chosenLayer)
         features = layerList[0].getFeatures() 
+        fields = []
 
         ## Get headlines from first feature
         request = QgsFeatureRequest().setFilterFid(0)
-        f1 = layerList[0].getFeatures(request).next()
-        fields = [c.name() for c in f1.fields().toList()] 
+        try:
+            f1 = layerList[0].getFeatures(request).next()
+            fields = [c.name() for c in f1.fields().toList()] 
 
-        ## Insert only numerical columns
-        self.numFields = {}
-        for i in range(len(fields)):
-            if layerList[0].pendingFields().field(i).typeName() in ["Real", "Integer"]:
-                self.numFields[i] = layerList[0].pendingFields().field(i).name()
+            ## Insert only numerical columns
+            self.numFields = {}
+            for i in range(len(fields)):
+                if layerList[0].pendingFields().field(i).typeName() in ["Real", "real", "Integer", "integer", "Double", "double", "Integer64", "integer64"]:
+                    self.numFields[i] = layerList[0].pendingFields().field(i).name()
 
-        ## Append columns to choose as a group column
-        if self.dlg.comboBox.count() == 0:
-            self.dlg.comboBox.addItems(fields)
+            ## Append columns to choose as a group column
+            if self.dlg.comboBox.count() == 0:
+                self.dlg.comboBox.addItems(fields)
+        
+        except:
+            self.numFields = {}
+            self.iface.messageBar().pushMessage("Error", u"Warstwa nie ma obiektów lub nie ma atrybutów", level=QgsMessageBar.WARNING, duration=4)
 
         return features, layerList, fields
 
